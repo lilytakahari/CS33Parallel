@@ -1,5 +1,11 @@
 # CS 33 Parallel Lab
 ~~Suffering for the sake of optimization.~~ Learning how to optimize and parallelize code using OpenMP.
+### How to run the code:
+1. Download the files into an empty directory.
+2. `make` to compile
+3. `./Test` to run
+
+`make clean` to delete everything but the source files
 
 ### What the code does:
 __In main.c:__ Initializes all elements of a 3D array to a random value from 0 to 999.
