@@ -13,23 +13,28 @@
 
 void work_it_par(long *old, long *new) {
   int i, j, k, ii, jj, kk, u, v, w;
+  long aggregate=1.0;
   
+  /* multiple histogram values to enable parallelism */
   long h0 = 0, h1 = 0, h2 = 0, h3 = 0, h4 = 0;
   long h5 = 0, h6 = 0, h7 = 0, h8 = 0, h9 = 0;
-
-  long aggregate=1.0;
+  
+  /* code motion: function values, common expressions */
   long needVal = we_need_the_func();
   long gimmieVal = gimmie_the_func();
-
   const long dimSq = DIM * DIM;
   const long dim = DIM - 1;
+  /* tileSize = 6 because DIM = 500, but mostly loop 498
+   * times, and 498 can be divided by 6 */
   const int tileSize = 6;
   const dimTile = dim - tileSize;
   
-#pragma omp parallel for private(j,k) reduction(+:aggregate)
+#pragma omp parallel for private(i,j,k) reduction(+:aggregate)
   for (i=1; i<dim; i++) {
+    /* accumulator variable to reduce multiplication */
     long jAcc = (i<<4)*15625 + DIM;
     for (j=1; j<dim; j++) {
+      /* 6 x 1 loop unrolling */
       for (k=1; k<=dimTile; k+=tileSize) {
 	long kStart = jAcc + k;
         long comp0 = old[kStart] * needVal;
@@ -55,7 +60,8 @@ void work_it_par(long *old, long *new) {
   for (ii=1; ii<=dimTile; ii+=tileSize) {
     for (jj=1; jj<=dimTile; jj+=tileSize) {
       for (kk=1; kk<=dimTile; kk+=tileSize) {
-
+	/* loop tiling, tile size 6 */
+	/* more accumulator variables */
 	long iAcc = (ii<<4)*15625;
 	for (i = ii; i < ii + tileSize; i++, iAcc += dimSq) {
           long jAcc = iAcc + (jj * DIM);
@@ -81,7 +87,7 @@ void work_it_par(long *old, long *new) {
       }
     }
   }
-
+  /* all those extra lines, a necessary consequence of parallelism */
 #pragma omp parallel for private(i,j,k,u) reduction(+:h0,h1,h2,h3,h4,h5,h6,h7,h8,h9)
   for (i=1; i<dim; i++) {
     long jAcc = (i<<4)*15625 + DIM;
