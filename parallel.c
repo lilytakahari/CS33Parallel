@@ -27,7 +27,6 @@ void work_it_par(long *old, long *new) {
   /* tileSize = 6 because DIM = 500, but mostly loop 498
    * times, and 498 can be divided by 6 */
   const int tileSize = 6;
-  const dimTile = dim - tileSize;
   
 #pragma omp parallel for private(i,j,k) reduction(+:aggregate)
   for (i=1; i<dim; i++) {
@@ -35,7 +34,7 @@ void work_it_par(long *old, long *new) {
     long jAcc = (i<<4)*15625 + DIM;
     for (j=1; j<dim; j++) {
       /* 6 x 1 loop unrolling */
-      for (k=1; k<=dimTile; k+=tileSize) {
+      for (k=1; k<dim; k+=tileSize) {
 	long kStart = jAcc + k;
         long comp0 = old[kStart] * needVal;
         aggregate+= comp0 / gimmieVal;
@@ -57,9 +56,9 @@ void work_it_par(long *old, long *new) {
   printf("AGGR:%ld\n",aggregate);
   
 #pragma omp parallel for private(ii,jj,kk,i,j,k,u,v)
-  for (ii=1; ii<=dimTile; ii+=tileSize) {
-    for (jj=1; jj<=dimTile; jj+=tileSize) {
-      for (kk=1; kk<=dimTile; kk+=tileSize) {
+  for (ii=1; ii<dim; ii+=tileSize) {
+    for (jj=1; jj<dim; jj+=tileSize) {
+      for (kk=1; kk<dim; kk+=tileSize) {
 	/* loop tiling, tile size 6 */
 	/* more accumulator variables */
 	long iAcc = (ii<<4)*15625;
@@ -68,7 +67,7 @@ void work_it_par(long *old, long *new) {
           for (j = jj; j < jj + tileSize; j++, jAcc += DIM) {
             long kAcc = jAcc + kk;
             for (k = kk; k < kk + tileSize; k++, kAcc++) {
-	      new[jAcc+k]=0;
+	      new[kAcc]=0;
 	      
 	      long oldU = kAcc - dimSq;
 	      for (u=-1; u<=1; u++) {
@@ -79,9 +78,8 @@ void work_it_par(long *old, long *new) {
 		}
 		oldU += dimSq;
 	      }	    
-	      new[jAcc+k]/=27;
+	      new[kAcc]/=27;
 	    }
-	    jAcc += DIM;
 	  }
 	}
       }
