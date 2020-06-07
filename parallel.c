@@ -1,9 +1,4 @@
 //OpenMP version.  Edit and submit only this file.
-/* Enter your details below
- * Name : Lily Takahari
- * UCLA ID : 305108348
- * Email : lilytakahari@gmail.com
- */
 
 #include <stdlib.h>
 #include <stdio.h>
